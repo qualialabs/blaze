@@ -1,3 +1,10 @@
+// this is necessary because when esbuild chunks things (when using dynamic imports)
+// it assumes that every import in that chunk is independent of each other (which is technically correct)
+// however, because blaze has an implicit depedency that jquery loads first, this fails.
+// this could be fixed more correctly by changing how we generate dependencies.js - but it would be brutal
+// it would require that every import be alone in a file with an import to it's predecessor
+import "meteor/jquery";
+
 var DOMBackend = {};
 Blaze._DOMBackend = DOMBackend;
 

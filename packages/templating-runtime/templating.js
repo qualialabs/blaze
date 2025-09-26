@@ -43,7 +43,7 @@ Template.__define__ = function (name, renderFunc) {
   // updating away from this method.
   if (!shownWarning) {
     shownWarning = true;
-    console.warn("You app is using old Template definition that is scheduled to be removed with Blaze 3.0, please check your app and packages for use of: Template.__define__");
+    console.warn("Your app is using old Template definition that is scheduled to be removed with Blaze 3.0, please check your app and packages for use of: Template.__define__");
   }
 };
 
@@ -138,7 +138,7 @@ Template._applyHmrChanges = function (templateName) {
           var newView = Blaze.render(Template.body, document.body, comment);
           Template.body.view = newView;
         } else if (view.dataVar) {
-          Blaze.renderWithData(renderFunc, view.dataVar.curValue, parentEl, comment);
+          Blaze.renderWithData(renderFunc, view.dataVar.curValue?.value, parentEl, comment);
         } else {
           Blaze.render(renderFunc, parentEl, comment);
         }

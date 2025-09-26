@@ -101,6 +101,11 @@ trying to index into a non-object or an undefined value.
 In addition, Spacebars will call functions for you, so `{% raw %}{{foo.bar}}{% endraw %}` may be
 taken to mean `foo().bar`, `foo.bar()`, or `foo().bar()` as appropriate.
 
+Similarly, if the accessed object is wrapped in a `Promise`, Spacebars will
+defer the path evaluation in a `Promise` as well. That is,
+`{% raw %}{{foo.bar}}{% endraw %}` will evaluate to `foo().then(x => x.bar)`.
+Both pending and rejected states will result in `undefined`.
+
 ## Helper Arguments
 
 An argument to a helper can be any path or identifier, or a string, boolean, or
@@ -121,6 +126,11 @@ frob(a, b, c, Spacebars.kw({verily: true}))
 `.hash` property is equal to its argument.
 
 The helper's implementation can access the current data context as `this`.
+
+If any of the arguments is a `Promise`, Spacebars will defer the call as long as
+all of the arguments will resolve. That is, `{% raw %}{{foo x y z}}{% endraw %}`
+will evaluate to `Promise.all([x, y, z]).then(args => foo(...args))`. Both
+pending and rejected states will result in `undefined`.
 
 ## Inclusion and Block Arguments
 
@@ -156,13 +166,25 @@ and not all tags are allowed at all locations.
 ### Double-braced Tags
 
 A double-braced tag at element level or in an attribute value typically evalutes
-to a string.  If it evalutes to something else, the value will be cast to a
+to a string. If it evalutes to something else, the value will be cast to a
 string, unless the value is `null`, `undefined`, or `false`, which results in
-nothing being displayed.
+nothing being displayed. `Promise`s are also supported -- see below.
 
 Values returned from helpers must be pure text, not HTML.  (That is, strings
 should have `<`, not `&lt;`.)  Spacebars will perform any necessary escaping if
 a template is rendered to HTML.
+
+### Async Content
+
+The values can be wrapped in a `Promise`. When that happens, it will be treated
+as `undefined` while it's pending or rejected. Once resolved, the resulting
+value is used. To have more fine-grained handling of non-resolved states, use
+`#let` and the async state helpers (e.g., `@pending`).
+
+> Please note that the values rendered this way create new `View` objects on
+> every `Promise` change and it may result in _flickering_, i.e., disappearing
+> for a brief moment before appearing again. We plan to optimize it in the next
+> versions. As a workaround, use `#let` to unpack the value.
 
 ### SafeString
 
@@ -183,6 +205,13 @@ An attribute value that consists entirely of template tags that return `null`,
 `undefined`, or `false` is considered absent; otherwise, the attribute is
 considered present, even if its value is empty.
 
+### Async Attributes
+
+The values can be wrapped in a `Promise`. When that happens, it will be treated
+as `undefined` while it's pending or rejected. Once resolved, the resulting
+value is used. To have more fine-grained handling of non-resolved states, use
+`#let` and the async state helpers (e.g., `@pending`).
+
 ### Dynamic Attributes
 
 A double-braced tag can be used in an HTML start tag to specify an arbitrary set
@@ -195,8 +224,8 @@ of attributes:
 ```
 
 The tag must evaluate to an object that serves as a dictionary of attribute name
-and value strings.  For convenience, the value may also be a string or null.  An
-empty string or null expands to `{}`.  A non-empty string must be an attribute
+and value strings. For convenience, the value may also be a string or null. An
+empty string or null expands to `{}`. A non-empty string must be an attribute
 name, and expands to an attribute with an empty value; for example, `"checked"`
 expands to `{checked: ""}` (which, as far as HTML is concerned, means the
 checkbox is checked).
@@ -210,7 +239,7 @@ To summarize:
   <tbody>
     <tr><td><code>""</code> or <code>null</code> or <code>{}</code></td></tr>
     <tr><td><code>"checked"</code> or <code>{checked: ""}</code></td><td><code>checked</code></td></tr>
-    <tr><td><code>{checked: "", 'class': "foo"}</code></td><td><code>checked  class=foo</code></td></tr>
+    <tr><td><code>{checked: "", 'class': "foo"}</code></td><td><code>checked class=foo</code></td></tr>
     <tr><td><code>{checked: false, 'class': "foo"}</code></td><td><code>class=foo</code></td></tr>
     <tr><td><code>"checked class=foo"</code></td><td>ERROR, string is not an attribute name</td></tr>
   </tbody>
@@ -229,6 +258,12 @@ specifies a value for the `class` attribute, it will overwrite `{% raw %}{{myCla
 As always, Spacebars takes care of recalculating the element's attributes if any
 of `myClass`, `attrs1`, or `attrs2` changes reactively.
 
+### Async Dynamic Attributes
+
+The dynamic attributes can be wrapped in a `Promise`. When that happens, they
+will be treated as `undefined` while it's pending or rejected. Once resolved,
+the resulting value is used. To have more fine-grained handling of non-resolved
+states, use `#let` and the async state helpers (e.g., `@pending`).
 
 ## Triple-braced Tags
 
@@ -244,6 +279,13 @@ The inserted HTML must consist of balanced HTML tags.  You can't, for example,
 insert `"</div><div>"` to close an existing div and open a new one.
 
 This template tag cannot be used in attributes or in an HTML start tag.
+
+### Async Content
+
+The raw HTML can be wrapped in a `Promise`. When that happens, it will not
+render anything if it's pending or rejected. Once resolved, the resulting value
+is used. To have more fine-grained handling of non-resolved states, use `#let`
+and the async state helpers (e.g., `@pending`).
 
 ## Inclusion Tags
 
@@ -347,6 +389,13 @@ well as the empty array, while any other value is considered true.
 
 `#unless` is just `#if` with the condition inverted.
 
+### Async Conditions
+
+The condition can be wrapped in a `Promise`. When that happens, both `#if` and
+`#unless` will not render anything if it's pending or rejected. Once resolved,
+the resulting value is used. To have more fine-grained handling of non-resolved
+states, use `#let` and the async state helpers (e.g., `@pending`).
+
 ## With
 
 A `#with` template tag establishes a new data context object for its contents.
@@ -413,6 +462,13 @@ context) if there are zero items in the sequence at any time.
 You can use a special variable `@index` in the body of `#each` to get the
 0-based index of the currently rendered value in the sequence.
 
+### Async Sequences
+
+The sequence argument can be wrapped in a `Promise`. When that happens, `#each`
+will render the "else" if it's pending or rejected. Once resolved, the resulting
+sequence is used. To have more fine-grained handling of non-resolved states, use
+`#let` and the async state helpers (e.g., `@pending`).
+
 ### Reactivity Model for Each
 
 When the argument to `#each` changes, the DOM is always updated to reflect the
@@ -456,6 +512,80 @@ data context, another variable) with a short-hand within the template:
 Variables introduced this way take precedence over names of templates, global
 helpers, fields of the current data context and previously introduced
 variables with the same name.
+
+Additionally, `#let` is capable of unwrapping `Promise` objects. That is, if
+any of the bindings is to one, the bound value won't be a `Promise`, but the
+resolved value instead. Both pending and rejected states will result in
+`undefined`.
+
+### Async States
+
+There are three global helpers used to query the state of the bound `Promise`s:
+* `@pending`, which checks whether any of the given bindings is still pending.
+* `@rejected`, which checks whether any of the given bindings has rejected.
+* `@resolved`, which checks whether any of the given bindings has resolved.
+
+```html
+{{#let name=getNameAsynchronously}}
+  {{#if @pending 'name'}}
+    We are fetching your name...
+  {{/if}}
+  {{#if @rejected 'name'}}
+    Sorry, an error occured!
+  {{/if}}
+  {{#if @resolved 'name'}}
+    Hi, {{name}}!
+  {{/if}}
+{{/let}}
+```
+
+All of them accept a list of names to check. Passing no arguments is the same as
+passing all bindings from the inner-most `#let`.
+
+```html
+{{#let name=getNameAsynchronously}}
+  {{#let color=getColorAsynchronously}}
+    {{#if @pending}}
+      We are fetching your color...
+    {{/if}}
+    {{#if @rejected 'name'}}
+      Sorry, an error occurred while fetching your name!
+    {{/if}}
+    {{#if @resolved 'color' 'name'}}
+      {{name}} gets a {{color}} card!
+    {{/if}}
+  {{/let}}
+{{/let}}
+```
+
+### Async Synchronization
+
+The bindings are **not** synchronized. That means, bindings store that _latest
+resolved value_, not _value of the latest `Promise`_. If the resolution time
+varies (e.g., involves network), it may result in desynchronized UI. In the
+below example, the rendered text is **not** guaranteed to be the result of the
+latest `getName` execution.
+
+```html
+<template name="example">
+  {{#let name=getName}}
+    Hi, {{name}}!
+  {{/let}}
+</template>
+```
+
+```js
+Template.example.helpers({
+  async getName() {
+    const userId = Meteor.userId(); // Reactive data source.
+    const profile = await fetch(/* ... */); // Async operation.
+    return profile.name;
+  },
+});
+```
+
+If a well-defined order of resolutions is required, consider using an external
+synchronization mechanism, e.g., a queue of pending async operations.
 
 ## Custom Block Helpers
 

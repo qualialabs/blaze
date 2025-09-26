@@ -1,3 +1,58 @@
+## v3.0.2, 2025-02-04
+
+### Highlights
+* [475](https://github.com/meteor/blaze/pull/475) Enhanced error context for exceptions in helper functions.
+
+## v3.0.1, 2024-11-14
+
+### Highlights / Potentially breaking changes
+* [471](https://github.com/meteor/blaze/pull/471) Added support for Promises in `#with`
+ 
+## v3.0.0, 2024-07-16
+
+### Highlights / Potentially breaking changes
+* [#373](https://github.com/meteor/blaze/pull/373) Remove fibers from codebase
+* [#378](https://github.com/meteor/blaze/pull/378) [spacebars-compiler] Update uglify-js to 3.16.1
+* [#351](https://github.com/meteor/blaze/pull/351) Eliminate whitespace in Template.dynamic
+* [#334](https://github.com/meteor/blaze/pull/334) Faster fragnent parsing by retaining a reference to the current document context
+* All packages were bumped to be compatible with Meteor 3.0
+
+
+## v2.9.0 2024-Mar-14
+
+* [#460](https://github.com/meteor/blaze/pull/460) Implemented async dynamic attributes.
+* [#458](https://github.com/meteor/blaze/pull/458) Blaze._expandAttributes returns empty object, if null.
+
+
+
+## v2.8.0 2023-Dec-28
+
+* [#431](https://github.com/meteor/blaze/pull/431) Depracate Ui package.
+* [#431](https://github.com/meteor/blaze/pull/432) Bump blaze hot dependencies.
+* [#428](https://github.com/meteor/blaze/pull/428) Implemented async attributes and content.
+* [#426](https://github.com/meteor/blaze/pull/426) Fix observe-squence has-implementation, close to underscore.
+* [#434](https://github.com/meteor/blaze/pull/434) Update templating deps.
+* [#435](https://github.com/meteor/blaze/pull/435) Updating dependencies for templating-compiler package.
+* [#433](https://github.com/meteor/blaze/pull/433) Update caching-html-compiler.
+
+## v2.7.1, 2023-May-26
+
+* [#413](https://github.com/meteor/blaze/pull/418) Fix reactivity for non-primitives.
+
+
+## v2.7.0, 2023-May-23
+
+* [#413](https://github.com/meteor/blaze/pull/413) Added support for Promises in Spacebars.call and Spacebars.dot.
+* [#412](https://github.com/meteor/blaze/pull/412) Implemented async bindings in #let.
+* 
+
+## v2.6.2, 2023-April-21
+
+* [#403](https://github.com/meteor/blaze/pull/403) Add TS types to core
+* [#405](https://github.com/meteor/blaze/pull/406) Stop establishing unnecessary reactive dependencies
+* [#410](https://github.com/meteor/blaze/pull/410) Fixes for legacy clients
+
+
 ## v2.6.1, 2022-July-25
 
 * [#370](https://github.com/meteor/blaze/pull/370) `templating-runtime@1.6.1`, returned the `Template.__define__` with warning message
@@ -47,14 +102,14 @@
 * [#321](https://github.com/meteor/blaze/pull/321) Just source code modernisation, making it easier to read. Shouldn't change any API's; except may need explicit import if other packages are using directly.
 
 * [#324](https://github.com/meteor/blaze/pull/324) Add a whitespace="strip" option to templates, which removes any whitespace that crosses newlines.
-  
+
 * [#276](https://github.com/meteor/blaze/pull/276) [HTML.isArray](https://github.com/brucejo75/blaze/blob/release-2.4/packages/htmljs/README.md#htmlisarrayx) works across iFrames.  This supports running blaze in sandboxed iFrames.
 
 ## v2.3.4, 2019-Dec-13
 
 * jquery 3 support
   [#299](https://github.com/meteor/blaze/pull/299)
-  
+
 ## v2.3.2, 2017-Mar-21
 
 * Made beautification of compiled spacebars code happen only on the server.
